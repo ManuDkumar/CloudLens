@@ -1,9 +1,30 @@
+# Local config with credentials (never commit)
 application-local.properties
 application-local.yml
+
+# Environment variables
+.env
+
+# Build output
 target/
+build/
 *.class
 *.jar
+*.war
+
+# Logs
 *.log
+
+# IDE files
 .idea/
 *.iml
 .vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Backup files
+*~
+*.swp
+*.bak
