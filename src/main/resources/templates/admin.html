@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CloudLens | File Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        :root {
+            --gradient-start: #0f0c29;
+            --gradient-mid: #302b63;
+            --gradient-end: #24243e;
+            --accent: #7c4dff;
+            --accent-light: #b388ff;
+            --card-bg: #ffffff;
+            --text-dark: #1a1a2e;
+            --text-muted: #6c757d;
+            --border-light: #e8e8f0;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-mid) 50%, var(--gradient-end) 100%);
+            min-height: 100vh;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.4rem;
+            color: #fff !important;
+            letter-spacing: -0.5px;
+        }
+
+        .navbar-brand i {
+            color: var(--accent-light);
+            margin-right: 8px;
+        }
+
+        .navbar-text {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.85rem;
+        }
+
+        .hero-section {
+            padding: 2rem 0 1rem;
+            text-align: center;
+        }
+
+        .hero-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: -1px;
+            margin-bottom: 0.5rem;
+        }
+
+        .hero-title span {
+            background: linear-gradient(135deg, var(--accent-light), #e040fb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 1.1rem;
+            font-weight: 400;
+            margin-bottom: 0;
+        }
+
+        .main-card {
+            background: var(--card-bg);
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .upload-area {
+            background: linear-gradient(135deg, #f8f9ff 0%, #f0f0ff 100%);
+            border: 2px dashed var(--accent);
+            border-radius: 16px;
+            padding: 2.5rem 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .upload-area:hover {
+            border-color: var(--accent-light);
+            background: linear-gradient(135deg, #f0f0ff 0%, #e8e0ff 100%);
+            transform: translateY(-1px);
+        }
+
+        .upload-area .upload-icon {
+            font-size: 3rem;
+            color: var(--accent);
+            margin-bottom: 0.75rem;
+        }
+
+        .upload-area h5 {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .upload-area p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 0;
+        }
+
+        .upload-area input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.5rem 1.5rem 0.75rem;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .section-header h5 {
+            font-weight: 700;
+            color: var(--text-dark);
+            margin: 0;
+        }
+
+        .section-header h5 i {
+            color: var(--accent);
+            margin-right: 8px;
+        }
+
+        .section-header .badge-count {
+            background: linear-gradient(135deg, var(--accent), var(--accent-light));
+            color: #fff;
+            font-weight: 600;
+            font-size: 0.75rem;
+            padding: 0.25em 0.75em;
+            border-radius: 50px;
+        }
+
+        .file-table {
+            margin: 0;
+        }
+
+        .file-table thead th {
+            background: #f8f9ff;
+            border-bottom: 2px solid var(--border-light);
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 0.75rem 1rem;
+            font-weight: 700;
+        }
+
+        .file-table tbody tr {
+            transition: background 0.2s ease;
+        }
+
+        .file-table tbody tr:hover {
+            background: #f8f9ff;
+        }
+
+        .file-table tbody td {
+            padding: 0.9rem 1rem;
+            vertical-align: middle;
+            border-bottom: 1px solid var(--border-light);
+            font-size: 0.9rem;
+        }
+
+        .file-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: #fff;
+            flex-shrink: 0;
+        }
+
+        .file-icon.image { background: linear-gradient(135deg, #e040fb, #7c4dff); }
+        .file-icon.pdf { background: linear-gradient(135deg, #ff5252, #d50000); }
+        .file-icon.document { background: linear-gradient(135deg, #448aff, #2962ff); }
+        .file-icon.archive { background: linear-gradient(135deg, #ffab40, #ff6d00); }
+        .file-icon.video { background: linear-gradient(135deg, #69f0ae, #00c853); }
+        .file-icon.audio { background: linear-gradient(135deg, #e040fb, #aa00ff); }
+        .file-icon.code { background: linear-gradient(135deg, #00e5ff, #0091ea); }
+        .file-icon.default { background: linear-gradient(135deg, #90a4ae, #546e7a); }
+
+        .file-name {
+            font-weight: 600;
+            color: var(--text-dark);
+            display: block;
+            line-height: 1.2;
+        }
+
+        .file-ext {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .file-desc {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            max-width: 200px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-size {
+            font-weight: 500;
+            color: var(--text-dark);
+            font-size: 0.85rem;
+        }
+
+        .file-date {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .btn-download {
+            background: linear-gradient(135deg, var(--accent), var(--accent-light));
+            border: none;
+            color: #fff;
+            border-radius: 8px;
+            padding: 0.4rem 1rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-download:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(124, 77, 255, 0.4);
+            color: #fff;
+        }
+
+        .btn-upload-submit {
+            background: linear-gradient(135deg, var(--accent), var(--accent-light));
+            border: none;
+            color: #fff;
+            border-radius: 10px;
+            padding: 0.7rem 2rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .btn-upload-submit:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(124, 77, 255, 0.35);
+            color: #fff;
+        }
+
+        .toast-container {
+            position: fixed;
+            top: 1.5rem;
+            right: 1.5rem;
+            z-index: 9999;
+        }
+
+        .toast-custom {
+            background: #fff;
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            min-width: 320px;
+            animation: slideIn 0.4s ease;
+        }
+
+        .toast-custom .toast-header {
+            border-bottom: none;
+            background: transparent;
+            padding: 1rem 1rem 0;
+        }
+
+        .toast-custom .toast-body {
+            padding: 0.5rem 1rem 1rem;
+            font-size: 0.9rem;
+        }
+
+        .toast-custom .icon-success {
+            color: #00c853;
+            font-size: 1.2rem;
+            margin-right: 8px;
+        }
+
+        .toast-custom .icon-error {
+            color: #ff5252;
+            font-size: 1.2rem;
+            margin-right: 8px;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+        .empty-state {
+            padding: 4rem 2rem;
+            text-align: center;
+        }
+
+        .empty-state .empty-icon {
+            font-size: 4rem;
+            color: #d0d0e0;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state h5 {
+            color: var(--text-dark);
+            font-weight: 600;
+        }
+
+        .empty-state p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            max-width: 360px;
+            margin: 0 auto;
+        }
+
+        .footer-text {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.8rem;
+            padding: 2rem 0;
+        }
+
+        .form-control, .form-control:focus {
+            border-radius: 10px;
+            border: 2px solid var(--border-light);
+            box-shadow: none;
+            padding: 0.6rem 1rem;
+            font-size: 0.9rem;
+        }
+
+        .form-control:focus {
+            border-color: var(--accent);
+        }
+
+        .search-bar {
+            border-radius: 10px;
+            border: 2px solid var(--border-light);
+            padding: 0.6rem 1rem 0.6rem 2.5rem;
+            font-size: 0.9rem;
+            background: #f8f9ff;
+            transition: all 0.3s ease;
+        }
+        .search-bar:focus {
+            border-color: var(--accent);
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(124, 77, 255, 0.1);
+        }
+        .search-wrapper { position: relative; }
+        .search-wrapper .bi-search {
+            position: absolute; left: 12px; top: 50%;
+            transform: translateY(-50%); color: var(--text-muted);
+        }
+        .search-wrapper .bi-x-circle-fill {
+            position: absolute; right: 12px; top: 50%;
+            transform: translateY(-50%); color: var(--text-muted);
+            cursor: pointer; display: none;
+        }
+        .search-wrapper .bi-x-circle-fill:hover { color: var(--accent); }
+
+        .file-checkbox { width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent); }
+        .bulk-bar {
+            display: none; align-items: center; gap: 0.5rem;
+            padding: 0.5rem 1.5rem; background: #f0f0ff;
+            border-bottom: 1px solid var(--border-light);
+        }
+        .bulk-bar.show { display: flex; }
+        .bulk-bar .selected-count { font-size: 0.85rem; color: var(--text-muted); font-weight: 600; }
+        .btn-bulk-delete {
+            background: #ff5252; border: none; color: #fff;
+            border-radius: 8px; padding: 0.3rem 1rem;
+            font-size: 0.8rem; font-weight: 600; transition: all 0.3s ease;
+        }
+        .btn-bulk-delete:hover { background: #d50000; color: #fff; }
+
+        .btn-edit {
+            border: 1px solid var(--accent); color: var(--accent);
+            border-radius: 8px; padding: 0.4rem 0.8rem;
+            font-size: 0.8rem; font-weight: 600;
+            background: transparent; transition: all 0.3s ease;
+        }
+        .btn-edit:hover { background: var(--accent); color: #fff; }
+
+        .file-thumb {
+            width: 40px; height: 40px; border-radius: 10px;
+            object-fit: cover; cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        .file-thumb:hover { transform: scale(1.1); }
+
+        .pagination-custom { margin: 0; padding: 1rem 1.5rem; justify-content: center; }
+        .pagination-custom .page-link {
+            border: none; color: var(--text-muted); font-weight: 600;
+            padding: 0.5rem 0.9rem; border-radius: 8px !important;
+            margin: 0 2px; font-size: 0.85rem;
+        }
+        .pagination-custom .page-link:hover { background: #f0f0ff; color: var(--accent); }
+        .pagination-custom .active .page-link {
+            background: linear-gradient(135deg, var(--accent), var(--accent-light));
+            color: #fff;
+        }
+        .pagination-custom .disabled .page-link {
+            opacity: 0.4; pointer-events: none;
+        }
+
+        .preview-modal .modal-content {
+            border: none; border-radius: 16px; overflow: hidden;
+            background: transparent; box-shadow: none;
+        }
+        .preview-modal .modal-body { padding: 0; text-align: center; }
+        .preview-modal img { max-width: 100%; max-height: 80vh; border-radius: 12px; }
+        .preview-modal .btn-close {
+            position: absolute; top: 10px; right: 10px;
+            background: rgba(0,0,0,0.5); color: #fff;
+            border-radius: 50%; padding: 8px; opacity: 1;
+        }
+
+        .edit-modal .modal-content {
+            border: none; border-radius: 16px;overflow: hidden;
+        }
+        .edit-modal .modal-header {
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-mid));
+            color: #fff; border: none; padding: 1.2rem 1.5rem;
+        }
+        .edit-modal .modal-header .btn-close { filter: invert(1); }
+        .edit-modal .modal-body { padding: 1.5rem; }
+
+        @media (max-width: 768px) {
+            .hero-title { font-size: 1.8rem; }
+            .file-table { font-size: 0.85rem; }
+            .file-desc { max-width: 120px; }
+            .section-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div th:if="${message}" class="toast-container">
+    <div class="toast toast-custom show" id="successToast">
+        <div class="toast-header">
+            <strong class="me-auto"><i class="bi bi-check-circle-fill icon-success"></i> Success</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body" th:text="${message}"></div>
+    </div>
+</div>
+<div th:if="${error}" class="toast-container">
+    <div class="toast toast-custom show" id="errorToast">
+        <div class="toast-header">
+            <strong class="me-auto"><i class="bi bi-x-circle-fill icon-error"></i> Error</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body" th:text="${error}"></div>
+    </div>
+</div>
+
+<nav class="navbar navbar-expand">
+    <div class="container">
+        <a class="navbar-brand" href="/">
+            <i class="bi bi-cloud-arrow-up-fill"></i> CloudLens
+        </a>
+        <div class="d-flex align-items-center gap-3">
+            <span class="navbar-text">
+                <i class="bi bi-person-circle me-1"></i> <span sec:authentication="name"></span>
+                <span sec:authorize="hasRole('ROLE_ADMIN')" class="badge bg-danger ms-1" style="font-size:0.65rem;">ADMIN</span>
+            </span>
+            <form method="post" action="/logout" style="margin:0;">
+                <button type="submit" class="btn btn-outline-light btn-sm"
+                        style="border-radius:8px;font-size:0.75rem;padding:0.25rem 0.75rem;">
+                    <i class="bi bi-box-arrow-right me-1"></i> Logout
+                </button>
+            </form>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="hero-section">
+        <h1 class="hero-title">Cloud <span>File Manager</span></h1>
+        <p class="hero-subtitle">Upload, store, and manage your files with metadata extraction</p>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="main-card p-3 text-center">
+                <div style="font-size:2rem;color:var(--accent);"><i class="bi bi-files"></i></div>
+                <div style="font-size:1.5rem;font-weight:800;" th:text="${totalFileCount}">0</div>
+                <div style="font-size:0.8rem;color:var(--text-muted);">Total Files</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="main-card p-3 text-center">
+                <div style="font-size:2rem;color:#00c853;"><i class="bi bi-images"></i></div>
+                <div style="font-size:1.5rem;font-weight:800;" th:text="${fileTypeDistribution.get('image') != null ? fileTypeDistribution.get('image') : 0}">0</div>
+                <div style="font-size:0.8rem;color:var(--text-muted);">Images</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="main-card p-3 text-center">
+                <div style="font-size:2rem;color:#448aff;"><i class="bi bi-file-earmark-text"></i></div>
+                <div style="font-size:1.5rem;font-weight:800;" th:text="${fileTypeDistribution.get('document') != null ? fileTypeDistribution.get('document') : 0}">0</div>
+                <div style="font-size:0.8rem;color:var(--text-muted);">Documents</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="main-card p-3 text-center">
+                <div style="font-size:2rem;color:#ffab40;"><i class="bi bi-archive"></i></div>
+                <div style="font-size:1.5rem;font-weight:800;" th:text="${fileTypeDistribution.get('archive') != null ? fileTypeDistribution.get('archive') : 0}">0</div>
+                <div style="font-size:0.8rem;color:var(--text-muted);">Archives</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-card mb-4">
+        <div class="section-header">
+            <h5><i class="bi bi-upload"></i> Upload New File</h5>
+        </div>
+        <div class="p-4">
+            <form method="post" action="/upload" enctype="multipart/form-data">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="upload-area" id="dropZone">
+                            <div class="upload-icon">
+                                <i class="bi bi-cloud-upload"></i>
+                            </div>
+                            <h5>Drop file here or click to browse</h5>
+                            <p>Supports any file type &mdash; max 50 MB</p>
+                            <input type="file" id="file" name="file" required>
+                        </div>
+                        <div class="mt-2">
+                            <small class="text-muted" id="selectedFile">No file selected</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="description" class="form-label fw-semibold">Description</label>
+                            <input type="text" class="form-control" id="description" name="description"
+                                   placeholder="e.g. Project report Q2, Architecture diagram..." required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Estimated size</label>
+                            <div class="text-muted small" id="fileSizePreview">Select a file to see size</div>
+                        </div>
+                        <button type="submit" class="btn-upload-submit">
+                            <i class="bi bi-cloud-arrow-up me-2"></i>Upload File
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="main-card mb-4">
+        <div class="section-header">
+            <h5><i class="bi bi-files"></i> Uploaded Files</h5>
+            <div class="d-flex align-items-center gap-3">
+                <span class="badge-count" th:text="${totalItems} + ' file' + (${totalItems} == 1 ? '' : 's')"></span>
+            </div>
+        </div>
+
+        <div class="px-4 pt-3 pb-2">
+            <form method="get" action="/" id="searchForm">
+                <div class="row g-2 align-items-center">
+                    <div class="col-md-6">
+                        <div class="search-wrapper">
+                            <i class="bi bi-search"></i>
+                            <input type="text" class="search-bar form-control" name="search"
+                                   placeholder="Search files by name or description..."
+                                   th:value="${search}" id="searchInput">
+                            <i class="bi bi-x-circle-fill" id="clearSearch"></i>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-download">
+                            <i class="bi bi-search me-1"></i> Search
+                        </button>
+                        <a th:if="${search != null && !search.isEmpty()}" href="/" class="btn btn-outline-secondary ms-2"
+                           style="border-radius:8px;padding:0.4rem 1rem;font-size:0.8rem;font-weight:600;">
+                            Clear
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="bulk-bar" id="bulkBar" sec:authorize="hasRole('ROLE_ADMIN')">
+            <input type="checkbox" id="selectAll" class="file-checkbox">
+            <span class="selected-count"><span id="selectedCount">0</span> selected</span>
+            <button class="btn-bulk-delete" id="bulkDeleteBtn">
+                <i class="bi bi-trash me-1"></i> Delete Selected
+            </button>
+        </div>
+
+        <form id="bulkDeleteForm" method="post" action="/delete/bulk"></form>
+
+        <div th:if="${#lists.isEmpty(files)}" class="empty-state">
+            <div class="empty-icon">
+                <i class="bi bi-inbox"></i>
+            </div>
+            <h5 th:if="${search != null && !search.isEmpty()}">No files match your search</h5>
+            <h5 th:unless="${search != null && !search.isEmpty()}">No files uploaded yet</h5>
+            <p th:if="${search != null && !search.isEmpty()}">Try a different search term or <a href="/" class="text-decoration-none" style="color:var(--accent);">clear filters</a>.</p>
+            <p th:unless="${search != null && !search.isEmpty()}">Upload your first file using the form above. All uploaded files will appear here with their metadata.</p>
+        </div>
+
+        <div th:unless="${#lists.isEmpty(files)}" class="table-responsive">
+            <table class="table file-table">
+                <thead>
+                <tr>
+                    <th style="width:40px;" sec:authorize="hasRole('ROLE_ADMIN')"><input type="checkbox" id="selectAllHeader" class="file-checkbox"></th>
+                    <th style="width:40px;display:none;" sec:authorize="!hasRole('ROLE_ADMIN')"></th>
+                    <th>File</th>
+                    <th>Description</th>
+                    <th>Size</th>
+                    <th>Uploaded</th>
+                    <th class="text-center" style="width:200px;">Action</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="file : ${files}">
+                    <td sec:authorize="hasRole('ROLE_ADMIN')"><input type="checkbox" class="file-checkbox row-checkbox" th:value="${file.internalId}"></td>
+                    <td sec:authorize="!hasRole('ROLE_ADMIN')" style="display:none;"></td>
+                    <td>
+                        <div class="d-flex align-items-center gap-3">
+                            <th:block th:if="${T(com.cloudlens.api.util.FileUtils).isImage(file.originalName)}">
+                                <img th:src="${file.downloadUrl}" class="file-thumb"
+                                     th:alt="${file.originalName}"
+                                     data-bs-toggle="modal" data-bs-target="#previewModal"
+                                     th:data-src="${file.downloadUrl}">
+                            </th:block>
+                            <th:block th:unless="${T(com.cloudlens.api.util.FileUtils).isImage(file.originalName)}">
+                                <div th:classappend="|file-icon ${T(com.cloudlens.api.util.FileUtils).getFileIconClass(file.originalName)}|">
+                                    <i th:classappend="${T(com.cloudlens.api.util.FileUtils).getFileIcon(file.originalName)}"></i>
+                                </div>
+                            </th:block>
+                            <div>
+                                <span class="file-name" th:text="${file.originalName}"></span>
+                                <span class="file-ext" th:text="${T(com.cloudlens.api.util.FileUtils).getFileExtension(file.originalName)}"></span>
+                            </div>
+                        </div>
+                    </td>
+                    <td><span class="file-desc" th:text="${file.description}" title="${file.description}"></span></td>
+                    <td><span class="file-size" th:text="${T(com.cloudlens.api.util.FileUtils).formatFileSize(file.fileSize)}"></span></td>
+                    <td><span class="file-date" th:text="${#temporals.format(file.uploadTimestamp, 'MMM dd, yyyy HH:mm')}"></span></td>
+                    <td class="text-center">
+                        <div class="d-flex gap-2 justify-content-center">
+                            <button type="button" class="btn btn-outline-secondary btn-sm"
+                                    style="border-radius:8px;padding:0.4rem 0.6rem;font-size:0.75rem;font-weight:600;"
+                                    data-bs-toggle="modal" data-bs-target="#metadataModal"
+                                    th:data-metadata="${file.extractedMetadata}"
+                                    th:data-name="${file.originalName}"
+                                    title="View metadata">
+                                <i class="bi bi-info-circle"></i>
+                            </button>
+                            <a th:href="${file.downloadUrl}" class="btn btn-download" target="_blank">
+                                <i class="bi bi-download"></i>
+                            </a>
+                            <button type="button" class="btn btn-edit" data-bs-toggle="modal" data-bs-target="#editModal"
+                                    th:data-id="${file.internalId}" th:data-desc="${file.description}"
+                                    sec:authorize="hasRole('ROLE_ADMIN')">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <form th:action="@{'/delete/' + ${file.internalId}}" method="post"
+                                  onsubmit="return confirm('Are you sure you want to delete this file?')" style="display:inline;"
+                                  sec:authorize="hasRole('ROLE_ADMIN')">
+                                <button type="submit" class="btn btn-outline-danger btn-sm"
+                                        style="border-radius:8px;padding:0.4rem 0.8rem;font-size:0.8rem;font-weight:600;">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <nav th:if="${totalPages > 1}" class="d-flex justify-content-center">
+            <ul class="pagination pagination-custom">
+                <li th:classappend="${currentPage == 0} ? 'disabled'">
+                    <a class="page-link" th:href="@{/(page=${currentPage - 1}, size=10, search=${search})}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+                <li th:each="i : ${#numbers.sequence(0, totalPages - 1)}" th:classappend="${i == currentPage} ? 'active'">
+                    <a class="page-link" th:href="@{/(page=${i}, size=10, search=${search})}" th:text="${i + 1}"></a>
+                </li>
+                <li th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
+                    <a class="page-link" th:href="@{/(page=${currentPage + 1}, size=10, search=${search})}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+
+    <div class="modal fade edit-modal" id="editModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Edit Description</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="post" id="editForm">
+                    <div class="modal-body">
+                        <label class="form-label fw-semibold">Description</label>
+                        <input type="text" class="form-control" id="editDescription" name="description"
+                               placeholder="Enter file description..." required>
+                    </div>
+                    <div class="modal-footer border-0 pt-0 px-4 pb-4">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"
+                                style="border-radius:10px;padding:0.6rem 1.5rem;font-weight:600;">Cancel</button>
+                        <button type="submit" class="btn-upload-submit" style="width:auto;padding:0.6rem 2rem;">
+                            <i class="bi bi-check-lg me-1"></i> Save
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade preview-modal" id="previewModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <img id="previewImage" src="" alt="Preview">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="metadataModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content" style="border:none;border-radius:16px;overflow:hidden;">
+                <div class="modal-header" style="background:linear-gradient(135deg,#0f0c29,#302b63);color:#fff;border:none;">
+                    <h5 class="modal-title"><i class="bi bi-file-earmark-text me-2"></i> <span id="metadataFileName"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter:invert(1);"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div id="metadataContent" style="font-size:0.9rem;">
+                        <div class="text-center text-muted py-4">No metadata available</div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0 px-4 pb-4">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"
+                            style="border-radius:10px;padding:0.5rem 1.5rem;font-weight:600;">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="footer-text">
+    <i class="bi bi-cloud-fill me-1"></i> CloudLens Metadata API &mdash; Spring Boot + Thymeleaf
+</div>
+
+<script>
+    // --- File upload ---
+    const fileInput = document.getElementById('file');
+    const selectedFile = document.getElementById('selectedFile');
+    const sizePreview = document.getElementById('fileSizePreview');
+
+    fileInput.addEventListener('change', function(e) {
+        if (this.files.length > 0) {
+            const f = this.files[0];
+            selectedFile.textContent = f.name;
+            selectedFile.style.color = '#1a1a2e';
+            sizePreview.textContent = formatBytes(f.size);
+        } else {
+            selectedFile.textContent = 'No file selected';
+            selectedFile.style.color = '#6c757d';
+            sizePreview.textContent = 'Select a file to see size';
+        }
+    });
+
+    function formatBytes(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // --- Bulk delete ---
+    const selectAllHeader = document.getElementById('selectAllHeader');
+    const selectAll = document.getElementById('selectAll');
+    const rowCheckboxes = document.querySelectorAll('.row-checkbox');
+    const bulkBar = document.getElementById('bulkBar');
+    const selectedCount = document.getElementById('selectedCount');
+    const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+    const bulkDeleteForm = document.getElementById('bulkDeleteForm');
+
+    function updateBulkBar() {
+        const checked = document.querySelectorAll('.row-checkbox:checked');
+        selectedCount.textContent = checked.length;
+        bulkBar.classList.toggle('show', checked.length > 0);
+    }
+
+    function toggleSelectAll(source) {
+        rowCheckboxes.forEach(cb => cb.checked = source.checked);
+        updateBulkBar();
+    }
+
+    selectAllHeader.addEventListener('change', function() {
+        toggleSelectAll(this);
+        if (selectAll) selectAll.checked = this.checked;
+    });
+    if (selectAll) {
+        selectAll.addEventListener('change', function() {
+            toggleSelectAll(this);
+            if (selectAllHeader) selectAllHeader.checked = this.checked;
+        });
+    }
+
+    rowCheckboxes.forEach(cb => {
+        cb.addEventListener('change', function() {
+            const allChecked = document.querySelectorAll('.row-checkbox:checked').length === rowCheckboxes.length;
+            if (selectAllHeader) selectAllHeader.checked = allChecked;
+            if (selectAll) selectAll.checked = allChecked;
+            updateBulkBar();
+        });
+    });
+
+    bulkDeleteBtn.addEventListener('click', function() {
+        const checked = document.querySelectorAll('.row-checkbox:checked');
+        if (checked.length === 0) return;
+        if (!confirm('Delete ' + checked.length + ' selected file(s)?')) return;
+        bulkDeleteForm.innerHTML = '';
+        checked.forEach(cb => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'selectedIds';
+            input.value = cb.value;
+            bulkDeleteForm.appendChild(input);
+        });
+        bulkDeleteForm.submit();
+    });
+
+    // --- Edit modal ---
+    const editModal = document.getElementById('editModal');
+    const editForm = document.getElementById('editForm');
+    const editDescription = document.getElementById('editDescription');
+
+    editModal.addEventListener('show.bs.modal', function(event) {
+        const btn = event.relatedTarget;
+        const id = btn.getAttribute('data-id');
+        const desc = btn.getAttribute('data-desc') || '';
+        editForm.action = '/update/' + id;
+        editDescription.value = desc;
+    });
+
+    // --- Image preview modal ---
+    const previewModal = document.getElementById('previewModal');
+    const previewImage = document.getElementById('previewImage');
+
+    previewModal.addEventListener('show.bs.modal', function(event) {
+        const img = event.relatedTarget;
+        const src = img.getAttribute('data-src');
+        previewImage.src = src;
+    });
+
+    previewModal.addEventListener('hidden.bs.modal', function() {
+        previewImage.src = '';
+    });
+
+    // --- Metadata modal ---
+    const metadataModal = document.getElementById('metadataModal');
+    const metadataContent = document.getElementById('metadataContent');
+    const metadataFileName = document.getElementById('metadataFileName');
+
+    metadataModal.addEventListener('show.bs.modal', function(event) {
+        const btn = event.relatedTarget;
+        const raw = btn.getAttribute('data-metadata');
+        const name = btn.getAttribute('data-name');
+        metadataFileName.textContent = name;
+
+        if (!raw || raw === '{}') {
+            metadataContent.innerHTML = '<div class="text-center text-muted py-4">No metadata extracted for this file.</div>';
+            return;
+        }
+
+        try {
+            const data = JSON.parse(raw);
+            let html = '<table class="table table-sm file-table" style="margin:0;">';
+            html += '<thead><tr><th style="width:40%;background:#f8f9ff;">Property</th><th style="background:#f8f9ff;">Value</th></tr></thead><tbody>';
+            for (const [key, value] of Object.entries(data)) {
+                if (value && value !== 'null' && !key.toLowerCase().includes('unknown')) {
+                    const displayKey = key.replace(/^.* - /, '');
+                    let displayValue = value;
+                    if (displayValue.length > 120) displayValue = displayValue.substring(0, 120) + '...';
+                    html += '<tr><td style="font-weight:500;color:var(--text-dark);font-size:0.8rem;">' + escapeHtml(displayKey) + '</td>' +
+                            '<td style="font-size:0.8rem;color:var(--text-muted);">' + escapeHtml(displayValue) + '</td></tr>';
+                }
+            }
+            html += '</tbody></table>';
+            metadataContent.innerHTML = html;
+        } catch (e) {
+            metadataContent.innerHTML = '<div class="text-center text-muted py-4">Unable to parse metadata.</div>';
+        }
+    });
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // --- Search clear ---
+    const searchInput = document.getElementById('searchInput');
+    const clearSearch = document.getElementById('clearSearch');
+
+    if (searchInput && clearSearch) {
+        searchInput.addEventListener('input', function() {
+            clearSearch.style.display = this.value ? 'block' : 'none';
+        });
+        clearSearch.addEventListener('click', function() {
+            searchInput.value = '';
+            clearSearch.style.display = 'none';
+            window.location.href = '/';
+        });
+        if (searchInput.value) clearSearch.style.display = 'block';
+    }
+
+    // --- Toast auto-dismiss ---
+    setTimeout(function() {
+        const toasts = document.querySelectorAll('.toast-custom');
+        toasts.forEach(t => {
+            setTimeout(() => {
+                t.style.animation = 'fadeOut 0.4s ease forwards';
+                setTimeout(() => t.classList.remove('show'), 400);
+            }, 3000);
+        });
+    }, 500);
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
