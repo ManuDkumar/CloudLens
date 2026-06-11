@@ -1,50 +1,14 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <th:block th:replace="~{fragments/common-head :: meta}"></th:block>
     <title>CloudLens | Sign Up</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <style>
-        body {
-            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
-            min-height: 100vh; display: flex; align-items: center; justify-content: center;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-        }
-        .auth-card {
-            background: #fff; border: none; border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3); padding: 2.5rem;
-            width: 100%; max-width: 420px;
-        }
-        .auth-card .brand { text-align: center; margin-bottom: 2rem; }
-        .auth-card .brand i { font-size: 2.5rem; color: #7c4dff; }
-        .auth-card .brand h2 { font-weight: 800; color: #1a1a2e; margin-top: 0.5rem; }
-        .auth-card .brand p { color: #6c757d; font-size: 0.9rem; }
-        .auth-card .form-control {
-            border-radius: 10px; border: 2px solid #e8e8f0;
-            padding: 0.7rem 1rem; font-size: 0.9rem;
-        }
-        .auth-card .form-control:focus { border-color: #7c4dff; box-shadow: 0 0 0 3px rgba(124,77,255,0.1); }
-        .auth-card .btn-submit {
-            background: linear-gradient(135deg, #7c4dff, #b388ff); border: none; color: #fff;
-            border-radius: 10px; padding: 0.7rem; font-weight: 600; width: 100%;
-            transition: all 0.3s ease;
-        }
-        .auth-card .btn-submit:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(124,77,255,0.35); }
-        .auth-card .footer-text { text-align: center; margin-top: 1.5rem; font-size: 0.85rem; color: #6c757d; }
-        .auth-card .footer-text a { color: #7c4dff; text-decoration: none; font-weight: 600; }
-        .toast-container { position: fixed; top: 1.5rem; right: 1.5rem; z-index: 9999; }
-        .toast-custom {
-            background: #fff; border: none; border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.15); min-width: 320px;
-            animation: slideIn 0.4s ease;
-        }
-        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
-    </style>
+    <th:block th:replace="~{fragments/common-head :: bootstrap-css}"></th:block>
+    <th:block th:replace="~{fragments/common-head :: bootstrap-icons}"></th:block>
+    <th:block th:replace="~{fragments/dashboard-styles :: auth-css}"></th:block>
 </head>
 <body>
+
 <div th:if="${error}" class="toast-container">
     <div class="toast toast-custom show">
         <div class="toast-header"><strong class="me-auto" style="color:#ff5252;"><i class="bi bi-x-circle-fill me-1" style="color:#ff5252;"></i> Error</strong><button type="button" class="btn-close" data-bs-dismiss="toast"></button></div>
@@ -73,7 +37,7 @@
         Already have an account? <a href="/login">Sign in</a>
     </div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<th:block th:replace="~{fragments/common-head :: bootstrap-js}"></th:block>
 <script>
     setTimeout(function() {
         document.querySelectorAll('.toast-custom').forEach(t => {

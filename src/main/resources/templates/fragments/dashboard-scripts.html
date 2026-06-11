@@ -1,0 +1,114 @@
+<script th:fragment="dashboard-scripts">
+    const fileInput = document.getElementById('file');
+    const selectedFile = document.getElementById('selectedFile');
+    const sizePreview = document.getElementById('fileSizePreview');
+
+    if (fileInput) {
+        fileInput.addEventListener('change', function(e) {
+            if (this.files.length > 0) {
+                const f = this.files[0];
+                selectedFile.textContent = f.name;
+                selectedFile.style.color = '#1a1a2e';
+                sizePreview.textContent = formatBytes(f.size);
+            } else {
+                selectedFile.textContent = 'No file selected';
+                selectedFile.style.color = '#6c757d';
+                sizePreview.textContent = 'Select a file to see size';
+            }
+        });
+    }
+
+    function formatBytes(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // Image preview modal
+    const previewModal = document.getElementById('previewModal');
+    const previewImage = document.getElementById('previewImage');
+
+    if (previewModal) {
+        previewModal.addEventListener('show.bs.modal', function(event) {
+            const img = event.relatedTarget;
+            const src = img.getAttribute('data-src');
+            previewImage.src = src;
+        });
+        previewModal.addEventListener('hidden.bs.modal', function() {
+            previewImage.src = '';
+        });
+    }
+
+    // Metadata modal
+    const metadataModal = document.getElementById('metadataModal');
+    const metadataContent = document.getElementById('metadataContent');
+    const metadataFileName = document.getElementById('metadataFileName');
+
+    if (metadataModal) {
+        metadataModal.addEventListener('show.bs.modal', function(event) {
+            const btn = event.relatedTarget;
+            const raw = btn.getAttribute('data-metadata');
+            const name = btn.getAttribute('data-name');
+            metadataFileName.textContent = name;
+
+            if (!raw || raw === '{}') {
+                metadataContent.innerHTML = '<div class="text-center text-muted py-4">No metadata extracted for this file.</div>';
+                return;
+            }
+
+            try {
+                const data = JSON.parse(raw);
+                let html = '<table class="table table-sm file-table" style="margin:0;">';
+                html += '<thead><tr><th style="width:40%;background:#f8f9ff;">Property</th><th style="background:#f8f9ff;">Value</th></tr></thead><tbody>';
+                for (const [key, value] of Object.entries(data)) {
+                    if (value && value !== 'null' && !key.toLowerCase().includes('unknown')) {
+                        const displayKey = key.replace(/^.* - /, '');
+                        let displayValue = value;
+                        if (displayValue.length > 120) displayValue = displayValue.substring(0, 120) + '...';
+                        html += '<tr><td style="font-weight:500;color:var(--text-dark);font-size:0.8rem;">' + escapeHtml(displayKey) + '</td>' +
+                                '<td style="font-size:0.8rem;color:var(--text-muted);">' + escapeHtml(displayValue) + '</td></tr>';
+                    }
+                }
+                html += '</tbody></table>';
+                metadataContent.innerHTML = html;
+            } catch (e) {
+                metadataContent.innerHTML = '<div class="text-center text-muted py-4">Unable to parse metadata.</div>';
+            }
+        });
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Search clear
+    const searchInput = document.getElementById('searchInput');
+    const clearSearch = document.getElementById('clearSearch');
+
+    if (searchInput && clearSearch) {
+        searchInput.addEventListener('input', function() {
+            clearSearch.style.display = this.value ? 'block' : 'none';
+        });
+        clearSearch.addEventListener('click', function() {
+            searchInput.value = '';
+            clearSearch.style.display = 'none';
+            window.location.href = '/';
+        });
+        if (searchInput.value) clearSearch.style.display = 'block';
+    }
+
+    // Toast auto-dismiss
+    setTimeout(function() {
+        const toasts = document.querySelectorAll('.toast-custom');
+        toasts.forEach(t => {
+            setTimeout(() => {
+                t.style.animation = 'fadeOut 0.4s ease forwards';
+                setTimeout(() => t.classList.remove('show'), 400);
+            }, 3000);
+        });
+    }, 500);
+</script>

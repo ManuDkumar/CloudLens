@@ -1,0 +1,20 @@
+<div th:fragment="toasts">
+    <div th:if="${message}" class="toast-container">
+        <div class="toast toast-custom show" id="successToast">
+            <div class="toast-header">
+                <strong class="me-auto"><i class="bi bi-check-circle-fill icon-success"></i> Success</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" th:text="${message}"></div>
+        </div>
+    </div>
+    <div th:if="${error}" class="toast-container">
+        <div class="toast toast-custom show" id="errorToast">
+            <div class="toast-header">
+                <strong class="me-auto"><i class="bi bi-x-circle-fill icon-error"></i> Error</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" th:text="${error}"></div>
+        </div>
+    </div>
+</div>
