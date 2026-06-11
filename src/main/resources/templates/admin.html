@@ -345,7 +345,7 @@
             const checked = document.querySelectorAll('.row-checkbox:checked');
             if (checked.length === 0) return;
             if (!confirm('Delete ' + checked.length + ' selected file(s)?')) return;
-            bulkDeleteForm.innerHTML = '';
+            bulkDeleteForm.querySelectorAll('input[name="selectedIds"]').forEach(e => e.remove());
             checked.forEach(cb => {
                 const input = document.createElement('input');
                 input.type = 'hidden';
