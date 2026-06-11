@@ -13,6 +13,7 @@ import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 
+import com.cloudlens.api.exception.StorageException;
 import java.io.InputStream;
 import java.time.Duration;
 import java.util.UUID;
@@ -42,7 +43,7 @@ public class S3StorageService implements StorageService {
             return internalFileName;
         } catch (Exception e) {
             log.error("Error uploading file to S3: {}", e.getMessage());
-            throw new RuntimeException("Failed to upload file to cloud storage", e);
+            throw new StorageException("Failed to upload file to cloud storage", e);
         }
     }
 
@@ -58,7 +59,7 @@ public class S3StorageService implements StorageService {
             log.info("Deleted file from S3: {}", storageKey);
         } catch (Exception e) {
             log.error("Error deleting file from S3: {}", e.getMessage());
-            throw new RuntimeException("Failed to delete file from cloud storage", e);
+            throw new StorageException("Failed to delete file from cloud storage", e);
         }
     }
 

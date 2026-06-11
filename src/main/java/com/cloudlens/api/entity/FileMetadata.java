@@ -6,7 +6,11 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "file_metadata")
+@Table(name = "file_metadata", indexes = {
+    @Index(name = "idx_uploaded_by", columnList = "uploadedBy"),
+    @Index(name = "idx_original_name", columnList = "originalName"),
+    @Index(name = "idx_upload_timestamp", columnList = "uploadTimestamp")
+})
 @Getter
 @Setter
 @NoArgsConstructor

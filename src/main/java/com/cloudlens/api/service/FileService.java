@@ -2,6 +2,8 @@ package com.cloudlens.api.service;
 
 import com.cloudlens.api.dto.FileResponse;
 import com.cloudlens.api.entity.FileMetadata;
+import com.cloudlens.api.exception.FileNotFoundException;
+import com.cloudlens.api.exception.StorageException;
 import com.cloudlens.api.repository.FileMetadataRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -67,7 +69,7 @@ public class FileService {
 
     public void deleteFile(UUID id) {
         FileMetadata metadata = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("File not found with id: " + id));
+                .orElseThrow(() -> new FileNotFoundException("File not found with id: " + id));
         storageService.deleteFile(metadata.getStorageUrl());
         repository.deleteById(id);
     }
@@ -80,14 +82,14 @@ public class FileService {
 
     public FileResponse updateFile(UUID id, String description) {
         FileMetadata metadata = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("File not found with id: " + id));
+                .orElseThrow(() -> new FileNotFoundException("File not found with id: " + id));
         metadata.setDescription(description);
         return mapToResponse(repository.save(metadata));
     }
 
     public FileResponse getFileMetadata(UUID id) {
         FileMetadata metadata = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("File not found with id: " + id));
+                .orElseThrow(() -> new FileNotFoundException("File not found with id: " + id));
         return mapToResponse(metadata);
     }
 

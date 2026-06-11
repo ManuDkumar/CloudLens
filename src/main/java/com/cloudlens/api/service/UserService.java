@@ -33,10 +33,17 @@ public class UserService implements UserDetailsService {
     }
 
     public void signup(String username, String password) {
-        if (userRepository.existsByUsername(username)) {
-            throw new RuntimeException("Username already taken");
+        if (username == null || username.trim().length() < 3) {
+            throw new IllegalArgumentException("Username must be at least 3 characters");
+        }
+        if (password == null || password.trim().length() < 4) {
+            throw new IllegalArgumentException("Password must be at least 4 characters");
+        }
+        if (userRepository.existsByUsername(username.trim())) {
+            throw new IllegalArgumentException("Username already taken");
         }
         User user = User.builder()
+                .username(username.trim())
                 .username(username)
                 .password(passwordEncoder.encode(password))
                 .role("USER")
