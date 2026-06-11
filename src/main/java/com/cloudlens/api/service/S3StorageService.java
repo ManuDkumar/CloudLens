@@ -14,7 +14,6 @@ import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignReques
 import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 
 import java.io.InputStream;
-import java.net.URI;
 import java.time.Duration;
 import java.util.UUID;
 
@@ -40,7 +39,7 @@ public class S3StorageService implements StorageService {
 
             s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(inputStream, fileSize));
 
-            return String.format("https://%s.s3.amazonaws.com/%s", bucketName, internalFileName);
+            return internalFileName;
         } catch (Exception e) {
             log.error("Error uploading file to S3: {}", e.getMessage());
             throw new RuntimeException("Failed to upload file to cloud storage", e);
@@ -48,18 +47,15 @@ public class S3StorageService implements StorageService {
     }
 
     @Override
-    public void deleteFile(String storageUrl) {
+    public void deleteFile(String storageKey) {
         try {
-            URI uri = new URI(storageUrl);
-            String key = uri.getPath().substring(1);
-
             DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
                     .bucket(bucketName)
-                    .key(key)
+                    .key(storageKey)
                     .build();
 
             s3Client.deleteObject(deleteObjectRequest);
-            log.info("Deleted file from S3: {}", key);
+            log.info("Deleted file from S3: {}", storageKey);
         } catch (Exception e) {
             log.error("Error deleting file from S3: {}", e.getMessage());
             throw new RuntimeException("Failed to delete file from cloud storage", e);
@@ -67,14 +63,11 @@ public class S3StorageService implements StorageService {
     }
 
     @Override
-    public String generatePresignedUrl(String storageUrl) {
+    public String generatePresignedUrl(String storageKey) {
         try {
-            URI uri = new URI(storageUrl);
-            String key = uri.getPath().substring(1);
-
             GetObjectRequest getObjectRequest = GetObjectRequest.builder()
                     .bucket(bucketName)
-                    .key(key)
+                    .key(storageKey)
                     .build();
 
             GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
@@ -86,7 +79,7 @@ public class S3StorageService implements StorageService {
             return presignedRequest.url().toString();
         } catch (Exception e) {
             log.error("Error generating presigned URL: {}", e.getMessage());
-            return storageUrl;
+            return storageKey;
         }
     }
 }

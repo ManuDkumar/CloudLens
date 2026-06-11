@@ -24,7 +24,7 @@ public class SecurityConfig {
         http
             .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/login", "/signup", "/css/**", "/js/**").permitAll()
+                .requestMatchers("/login", "/signup", "/css/**", "/js/**", "/actuator/health").permitAll()
                 .requestMatchers("/delete/**", "/update/**", "/api/v1/files/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
@@ -37,7 +37,9 @@ public class SecurityConfig {
                 .logoutSuccessUrl("/login?logout")
                 .permitAll()
             )
-            .csrf(csrf -> csrf.disable());
+            .csrf(csrf -> csrf
+                .ignoringRequestMatchers("/api/v1/**")
+            );
         return http.build();
     }
 

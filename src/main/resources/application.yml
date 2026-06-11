@@ -1,5 +1,5 @@
 server:
-  port: 8081
+  port: ${PORT:8081}
 
 spring:
   profiles:
@@ -32,10 +32,11 @@ spring:
 
 cloud:
   storage:
-    bucket-name: ${S3_BUCKET_NAME:cloudlens-metadata-bucket}
-    region: ${AWS_REGION:eu-north-1}
-    access-key: ${AWS_ACCESS_KEY:}
-    secret-key: ${AWS_SECRET_KEY:}
+    bucket-name: ${STORAGE_BUCKET:${S3_BUCKET_NAME:cloudlens-metadata-bucket}}
+    region: ${STORAGE_REGION:${AWS_REGION:eu-north-1}}
+    access-key: ${STORAGE_ACCESS_KEY:${AWS_ACCESS_KEY:}}
+    secret-key: ${STORAGE_SECRET_KEY:${AWS_SECRET_KEY:}}
+    endpoint: ${STORAGE_ENDPOINT:}
 
 logging:
   level:
