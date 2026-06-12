@@ -44,10 +44,22 @@ public class UserService implements UserDetailsService {
         }
         User user = User.builder()
                 .username(username.trim())
-                .username(username)
                 .password(passwordEncoder.encode(password))
                 .role("USER")
                 .build();
+        userRepository.save(user);
+    }
+
+    public void changePassword(String username, String currentPassword, String newPassword) {
+        if (newPassword == null || newPassword.trim().length() < 4) {
+            throw new IllegalArgumentException("New password must be at least 4 characters");
+        }
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            throw new IllegalArgumentException("Current password is incorrect");
+        }
+        user.setPassword(passwordEncoder.encode(newPassword.trim()));
         userRepository.save(user);
     }
 
