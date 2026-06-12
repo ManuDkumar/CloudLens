@@ -1,6 +1,8 @@
 package com.cloudlens.api.service;
 
+import com.cloudlens.api.dto.UserResponse;
 import com.cloudlens.api.entity.User;
+import com.cloudlens.api.repository.FileMetadataRepository;
 import com.cloudlens.api.repository.UserRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +23,7 @@ public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final FileService fileService;
+    private final FileMetadataRepository fileMetadataRepository;
 
     @PostConstruct
     public void seedAdmin() {
@@ -74,6 +77,32 @@ public class UserService implements UserDetailsService {
         }
         user.setPassword(passwordEncoder.encode(newPassword.trim()));
         userRepository.save(user);
+    }
+
+    public List<UserResponse> getAllUsers(String search) {
+        return userRepository.findAll().stream()
+                .filter(u -> search == null || search.isBlank()
+                        || u.getUsername().toLowerCase().contains(search.toLowerCase())
+                        || u.getRole().toLowerCase().contains(search.toLowerCase()))
+                .map(u -> UserResponse.builder()
+                        .id(u.getId())
+                        .username(u.getUsername())
+                        .role(u.getRole())
+                        .fileCount(fileMetadataRepository.countByUploadedBy(u.getUsername()))
+                        .build())
+                .sorted((a, b) -> {
+                    if (a.getRole().equals(b.getRole())) return a.getUsername().compareToIgnoreCase(b.getUsername());
+                    return a.getRole().equals("ADMIN") ? -1 : 1;
+                })
+                .toList();
+    }
+
+    @Transactional
+    public void adminDeleteUser(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + username));
+        fileService.deleteAllFilesByUser(username);
+        userRepository.delete(user);
     }
 
     @Override

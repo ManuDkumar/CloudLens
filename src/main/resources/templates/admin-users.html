@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <th:block th:replace="~{fragments/common-head :: meta}"></th:block>
+    <title>CloudLens | Manage Users</title>
+    <th:block th:replace="~{fragments/common-head :: bootstrap-css}"></th:block>
+    <th:block th:replace="~{fragments/common-head :: bootstrap-icons}"></th:block>
+    <th:block th:replace="~{fragments/dashboard-styles :: dashboard-css}"></th:block>
+</head>
+<body>
+
+<th:block th:replace="~{fragments/toasts :: toasts}"></th:block>
+<th:block th:replace="~{fragments/navbar :: navbar}"></th:block>
+
+<div class="container">
+    <div class="hero-section">
+        <h1 class="hero-title">User <span>Management</span></h1>
+        <p class="hero-subtitle">View and manage all registered users</p>
+    </div>
+
+    <div class="main-card mb-4">
+        <div class="section-header">
+            <h5><i class="bi bi-people-fill"></i> All Users</h5>
+            <span class="badge-count" th:text="${#lists.size(users)} + ' user' + (${#lists.size(users)} == 1 ? '' : 's')"></span>
+        </div>
+
+        <div class="px-4 pt-3 pb-2">
+            <form method="get" action="/admin/users" id="searchForm">
+                <div class="row g-2 align-items-center">
+                    <div class="col-md-6">
+                        <div class="search-wrapper">
+                            <i class="bi bi-search"></i>
+                            <input type="text" class="search-bar form-control" name="search"
+                                   placeholder="Search users by username or role..."
+                                   th:value="${search}" id="searchInput">
+                            <i class="bi bi-x-circle-fill" id="clearSearch"></i>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-download">
+                            <i class="bi bi-search me-1"></i> Search
+                        </button>
+                        <a th:if="${search != null && !search.isEmpty()}" href="/admin/users" class="btn btn-outline-secondary ms-2"
+                           style="border-radius:8px;padding:0.4rem 1rem;font-size:0.8rem;font-weight:600;">
+                            Clear
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div th:if="${#lists.isEmpty(users)}" class="empty-state">
+            <div class="empty-icon"><i class="bi bi-people"></i></div>
+            <h5 th:if="${search != null && !search.isEmpty()}">No users match your search</h5>
+            <h5 th:unless="${search != null && !search.isEmpty()}">No users found</h5>
+            <p th:if="${search != null && !search.isEmpty()}">Try a different search term or <a href="/admin/users" class="text-decoration-none" style="color:var(--accent);">clear filters</a>.</p>
+        </div>
+
+        <div th:unless="${#lists.isEmpty(users)}" class="table-responsive">
+            <table class="table file-table">
+                <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Role</th>
+                    <th>Files</th>
+                    <th class="text-center" style="width:120px;">Action</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="user : ${users}">
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-person-circle" style="font-size:1.5rem;color:var(--accent);"></i>
+                            <span class="file-name" th:text="${user.username}"></span>
+                        </div>
+                    </td>
+                    <td>
+                        <span th:if="${user.role == 'ADMIN'}" class="badge bg-danger">ADMIN</span>
+                        <span th:unless="${user.role == 'ADMIN'}" class="badge bg-secondary">USER</span>
+                    </td>
+                    <td><span class="file-size" th:text="${user.fileCount}"></span></td>
+                    <td class="text-center">
+                        <form th:if="${user.role != 'ADMIN'}" th:action="@{'/admin/users/delete/' + ${user.username}}"
+                              method="post" onsubmit="return confirm('Delete user &quot;' + '${user.username}' + '&quot; and all their files?')">
+                            <button type="submit" class="btn btn-outline-danger btn-sm"
+                                    style="border-radius:8px;padding:0.4rem 0.8rem;font-size:0.8rem;font-weight:600;">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+                        </form>
+                        <span th:if="${user.role == 'ADMIN'}" class="text-muted" style="font-size:0.8rem;">—</span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="footer-text">
+    <i class="bi bi-cloud-fill me-1"></i> CloudLens &mdash; Intelligent Cloud Storage
+</div>
+
+<th:block th:replace="~{fragments/common-head :: bootstrap-js}"></th:block>
+<script>
+    document.getElementById('clearSearch')?.addEventListener('click', function() {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('searchForm').submit();
+    });
+    document.getElementById('searchInput')?.addEventListener('input', function() {
+        document.getElementById('clearSearch').style.display = this.value ? 'block' : 'none';
+    });
+</script>
+</body>
+</html>
