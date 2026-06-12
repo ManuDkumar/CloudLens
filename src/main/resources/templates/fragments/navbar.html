@@ -1,4 +1,5 @@
-<nav th:fragment="navbar" class="navbar navbar-expand" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<div th:fragment="navbar" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<nav class="navbar navbar-expand">
     <div class="container">
         <a class="navbar-brand" href="/">
             <i class="bi bi-cloud-arrow-up-fill"></i> CloudLens
@@ -18,6 +19,12 @@
                style="border-radius:8px;font-size:0.75rem;padding:0.25rem 0.75rem;">
                 <i class="bi bi-key me-1"></i> Password
             </a>
+            <button type="button" class="btn btn-outline-danger btn-sm"
+                    style="border-radius:8px;font-size:0.75rem;padding:0.25rem 0.75rem;"
+                    data-bs-toggle="modal" data-bs-target="#deleteAccountModal"
+                    sec:authorize="!hasRole('ROLE_ADMIN')">
+                <i class="bi bi-person-x me-1"></i> Delete
+            </button>
             <form method="post" th:action="@{/logout}" style="margin:0;">
                 <button type="submit" class="btn btn-outline-light btn-sm"
                         style="border-radius:8px;font-size:0.75rem;padding:0.25rem 0.75rem;">
@@ -27,3 +34,31 @@
         </div>
     </div>
 </nav>
+
+<div class="modal fade" id="deleteAccountModal" tabindex="-1" sec:authorize="!hasRole('ROLE_ADMIN')">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border:none;border-radius:16px;overflow:hidden;">
+            <div class="modal-header" style="background:linear-gradient(135deg,#ff5252,#d50000);color:#fff;border:none;">
+                <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill me-2"></i>Delete Account</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter:invert(1);"></button>
+            </div>
+            <form method="post" th:action="@{/delete-account}">
+                <div class="modal-body p-4">
+                    <p class="fw-semibold text-danger">This will permanently delete your account and all uploaded files.</p>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Enter your password to confirm</label>
+                        <input type="password" class="form-control" name="password" placeholder="Your password" required>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0 px-4 pb-4">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"
+                            style="border-radius:10px;padding:0.6rem 1.5rem;font-weight:600;">Cancel</button>
+                    <button type="submit" class="btn" style="background:linear-gradient(135deg,#ff5252,#d50000);color:#fff;border:none;border-radius:10px;padding:0.6rem 1.5rem;font-weight:600;">
+                        <i class="bi bi-trash me-1"></i> Delete Forever
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</div>
