@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -19,6 +20,7 @@ public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final FileService fileService;
 
     @PostConstruct
     public void seedAdmin() {
@@ -48,6 +50,17 @@ public class UserService implements UserDetailsService {
                 .role("USER")
                 .build();
         userRepository.save(user);
+    }
+
+    @Transactional
+    public void deleteAccount(String username, String password) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new IllegalArgumentException("Password is incorrect");
+        }
+        fileService.deleteAllFilesByUser(username);
+        userRepository.delete(user);
     }
 
     public void changePassword(String username, String currentPassword, String newPassword) {

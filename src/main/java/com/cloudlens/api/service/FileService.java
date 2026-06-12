@@ -80,6 +80,14 @@ public class FileService {
         }
     }
 
+    public void deleteAllFilesByUser(String username) {
+        List<FileMetadata> files = repository.findByUploadedBy(username);
+        for (FileMetadata file : files) {
+            storageService.deleteFile(file.getStorageUrl());
+        }
+        repository.deleteAll(files);
+    }
+
     public FileResponse updateFile(UUID id, String description) {
         FileMetadata metadata = repository.findById(id)
                 .orElseThrow(() -> new FileNotFoundException("File not found with id: " + id));
