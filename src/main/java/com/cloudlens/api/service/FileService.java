@@ -13,8 +13,8 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -47,10 +47,12 @@ public class FileService {
     }
 
     public FileResponse uploadFile(MultipartFile file, String description, String uploadedBy) throws IOException {
-        byte[] fileBytes = file.getBytes();
-        String storageUrl = storageService.uploadFile(
-                new ByteArrayInputStream(fileBytes), file.getOriginalFilename(), file.getSize());
-        String extractedMetadata = metadataService.extractMetadata(file.getOriginalFilename(), fileBytes);
+        String originalName = file.getOriginalFilename();
+        String storageUrl = storageService.uploadFile(file.getInputStream(), originalName, file.getSize());
+        String extractedMetadata;
+        try (InputStream metaStream = file.getInputStream()) {
+            extractedMetadata = metadataService.extractMetadata(originalName, metaStream, file.getSize());
+        }
 
         FileMetadata metadata = FileMetadata.builder()
                 .originalName(file.getOriginalFilename())
@@ -101,9 +103,12 @@ public class FileService {
         return mapToResponse(repository.save(metadata));
     }
 
-    public FileResponse getFileMetadata(UUID id) {
+    public FileResponse getFileMetadata(UUID id, String currentUser, boolean isAdmin) {
         FileMetadata metadata = repository.findById(id)
                 .orElseThrow(() -> new FileNotFoundException("File not found with id: " + id));
+        if (!isAdmin && !metadata.getUploadedBy().equals(currentUser)) {
+            throw new AccessDeniedException("You do not have permission to access this file");
+        }
         return mapToResponse(metadata);
     }
 

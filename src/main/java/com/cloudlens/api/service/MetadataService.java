@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.stereotype.Service;
 
-import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -17,31 +17,40 @@ public class MetadataService {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public String extractMetadata(String fileName, byte[] fileBytes) {
-        if (fileName == null || fileBytes == null || fileBytes.length == 0) {
+    public String extractMetadata(String fileName, InputStream inputStream, long fileSize) {
+        if (fileName == null) {
             return "{}";
         }
         String ext = extension(fileName);
         try {
-            switch (ext) {
-                case "jpg": case "jpeg": case "png": case "gif":
-                case "bmp": case "webp": case "ico": case "tiff": case "tif":
-                    return extractImageMetadata(fileBytes);
-                default:
-                    return extractBasicMetadata(fileBytes.length, ext);
+            if (isImageExt(ext)) {
+                return extractImageMetadata(inputStream, fileSize);
+            } else {
+                return extractBasicMetadata(fileSize, ext);
             }
         } catch (Exception e) {
             return "{\"error\":\"Failed to extract metadata\"}";
         }
     }
 
-    private String extractImageMetadata(byte[] fileBytes) {
+    public String extractBasicMetadata(long fileSize, String ext) {
+        try {
+            ObjectNode node = objectMapper.createObjectNode();
+            node.put("File Type", fileTypeLabel(ext));
+            node.put("File Size", formatSize(fileSize));
+            return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);
+        } catch (JsonProcessingException e) {
+            return "{}";
+        }
+    }
+
+    private String extractImageMetadata(InputStream inputStream, long fileSize) {
         try {
             Map<String, String> metadata = new LinkedHashMap<>();
-            com.drew.metadata.Metadata drewMetadata = ImageMetadataReader.readMetadata(
-                    new ByteArrayInputStream(fileBytes));
+            com.drew.metadata.Metadata drewMetadata = ImageMetadataReader.readMetadata(inputStream);
 
             metadata.put("File Type", "Image");
+            metadata.put("File Size", formatSize(fileSize));
 
             for (Directory directory : drewMetadata.getDirectories()) {
                 for (Tag tag : directory.getTags()) {
@@ -59,7 +68,7 @@ public class MetadataService {
             try {
                 ObjectNode node = objectMapper.createObjectNode();
                 node.put("File Type", "Image");
-                node.put("File Size", formatSize(fileBytes.length));
+                node.put("File Size", formatSize(fileSize));
                 return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);
             } catch (JsonProcessingException ex) {
                 return "{}";
@@ -67,15 +76,11 @@ public class MetadataService {
         }
     }
 
-    private String extractBasicMetadata(long fileSize, String ext) {
-        try {
-            ObjectNode node = objectMapper.createObjectNode();
-            node.put("File Type", fileTypeLabel(ext));
-            node.put("File Size", formatSize(fileSize));
-            return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);
-        } catch (JsonProcessingException e) {
-            return "{}";
-        }
+    private boolean isImageExt(String ext) {
+        return switch (ext) {
+            case "jpg", "jpeg", "png", "gif", "bmp", "webp", "ico", "tiff", "tif" -> true;
+            default -> false;
+        };
     }
 
     private String fileTypeLabel(String ext) {

@@ -70,9 +70,12 @@ public class FileController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<FileResponse> getFile(@PathVariable UUID id) {
+    public ResponseEntity<FileResponse> getFile(@PathVariable UUID id, Authentication authentication) {
         try {
-            FileResponse response = fileService.getFileMetadata(id);
+            String username = authentication.getName();
+            boolean isAdmin = authentication.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+            FileResponse response = fileService.getFileMetadata(id, username, isAdmin);
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();

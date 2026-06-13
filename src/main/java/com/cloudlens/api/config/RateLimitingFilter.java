@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,22 +26,27 @@ public class RateLimitingFilter implements Filter {
             throws IOException, ServletException {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
-        String ip = httpRequest.getRemoteAddr();
+
+        if (isPublicEndpoint(httpRequest.getRequestURI())) {
+            chain.doFilter(request, response);
+            return;
+        }
+
+        String ip = resolveClientIp(httpRequest);
         long now = System.currentTimeMillis();
 
-        requestCounts.compute(ip, (key, timestamps) -> {
+        long count = requestCounts.compute(ip, (key, timestamps) -> {
             if (timestamps == null) {
-                List<Long> newList = new ArrayList<>();
-                newList.add(now);
-                return newList;
+                timestamps = Collections.synchronizedList(new ArrayList<>());
             }
-            timestamps.removeIf(ts -> now - ts > TIME_WINDOW_MS);
-            timestamps.add(now);
+            synchronized (timestamps) {
+                timestamps.removeIf(ts -> now - ts > TIME_WINDOW_MS);
+                timestamps.add(now);
+            }
             return timestamps;
-        });
+        }).size();
 
-        List<Long> timestamps = requestCounts.get(ip);
-        if (timestamps != null && timestamps.size() > MAX_REQUESTS) {
+        if (count > MAX_REQUESTS) {
             httpResponse.setStatus(429);
             httpResponse.setContentType("application/json");
             httpResponse.getWriter().write("{\"error\":\"Too many requests. Please try again later.\"}");
@@ -48,5 +54,24 @@ public class RateLimitingFilter implements Filter {
         }
 
         chain.doFilter(request, response);
+    }
+
+    private boolean isPublicEndpoint(String path) {
+        return path.equals("/login") || path.equals("/signup")
+                || path.startsWith("/css/") || path.startsWith("/js/")
+                || path.equals("/actuator/health");
+    }
+
+    private String resolveClientIp(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("X-Real-IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getRemoteAddr();
+        } else {
+            ip = ip.split(",")[0].trim();
+        }
+        return ip;
     }
 }

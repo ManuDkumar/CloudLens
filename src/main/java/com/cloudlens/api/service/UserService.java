@@ -6,6 +6,7 @@ import com.cloudlens.api.repository.FileMetadataRepository;
 import com.cloudlens.api.repository.UserRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -26,6 +27,7 @@ public class UserService implements UserDetailsService {
     private final FileMetadataRepository fileMetadataRepository;
 
     @PostConstruct
+    @Profile("!prod")
     public void seedAdmin() {
         if (!userRepository.existsByUsername("admin")) {
             User admin = User.builder()
@@ -41,8 +43,11 @@ public class UserService implements UserDetailsService {
         if (username == null || username.trim().length() < 3) {
             throw new IllegalArgumentException("Username must be at least 3 characters");
         }
-        if (password == null || password.trim().length() < 4) {
-            throw new IllegalArgumentException("Password must be at least 4 characters");
+        if (password == null || password.trim().length() < 8) {
+            throw new IllegalArgumentException("Password must be at least 8 characters");
+        }
+        if (!password.matches(".*[A-Z].*") || !password.matches(".*[a-z].*") || !password.matches(".*\\d.*")) {
+            throw new IllegalArgumentException("Password must contain at least one uppercase letter, one lowercase letter, and one digit");
         }
         if (userRepository.existsByUsername(username.trim())) {
             throw new IllegalArgumentException("Username already taken");
@@ -67,8 +72,11 @@ public class UserService implements UserDetailsService {
     }
 
     public void changePassword(String username, String currentPassword, String newPassword) {
-        if (newPassword == null || newPassword.trim().length() < 4) {
-            throw new IllegalArgumentException("New password must be at least 4 characters");
+        if (newPassword == null || newPassword.trim().length() < 8) {
+            throw new IllegalArgumentException("New password must be at least 8 characters");
+        }
+        if (!newPassword.matches(".*[A-Z].*") || !newPassword.matches(".*[a-z].*") || !newPassword.matches(".*\\d.*")) {
+            throw new IllegalArgumentException("New password must contain at least one uppercase letter, one lowercase letter, and one digit");
         }
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
