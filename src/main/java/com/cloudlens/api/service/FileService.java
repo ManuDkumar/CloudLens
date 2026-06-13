@@ -120,15 +120,10 @@ public class FileService {
     }
 
     public Map<String, Long> getFileTypeDistribution(String currentUser, boolean isAdmin) {
-        List<FileMetadata> all;
-        if (isAdmin) {
-            all = repository.findAll();
-        } else {
-            all = repository.findByUploadedBy(currentUser);
-        }
+        List<String> names = repository.findOriginalNamesByUsername(isAdmin ? null : currentUser);
         Map<String, Long> dist = new java.util.HashMap<>();
-        for (FileMetadata f : all) {
-            String type = com.cloudlens.api.util.FileUtils.getFileIconClass(f.getOriginalName());
+        for (String name : names) {
+            String type = com.cloudlens.api.util.FileUtils.getFileIconClass(name);
             dist.merge(type, 1L, Long::sum);
         }
         return dist;

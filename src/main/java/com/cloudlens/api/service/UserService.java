@@ -88,20 +88,13 @@ public class UserService implements UserDetailsService {
     }
 
     public List<UserResponse> getAllUsers(String search) {
-        return userRepository.findAll().stream()
-                .filter(u -> search == null || search.isBlank()
-                        || u.getUsername().toLowerCase().contains(search.toLowerCase())
-                        || u.getRole().toLowerCase().contains(search.toLowerCase()))
+        return userRepository.searchUsers(search).stream()
                 .map(u -> UserResponse.builder()
                         .id(u.getId())
                         .username(u.getUsername())
                         .role(u.getRole())
                         .fileCount(fileMetadataRepository.countByUploadedBy(u.getUsername()))
                         .build())
-                .sorted((a, b) -> {
-                    if (a.getRole().equals(b.getRole())) return a.getUsername().compareToIgnoreCase(b.getUsername());
-                    return a.getRole().equals("ADMIN") ? -1 : 1;
-                })
                 .toList();
     }
 

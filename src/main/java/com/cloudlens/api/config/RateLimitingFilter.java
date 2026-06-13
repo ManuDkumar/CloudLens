@@ -1,6 +1,12 @@
 package com.cloudlens.api.config;
 
-import jakarta.servlet.*;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.core.annotation.Order;
@@ -10,16 +16,22 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 @Component
 @Order(1)
 public class RateLimitingFilter implements Filter {
 
-    private final Map<String, List<Long>> requestCounts = new ConcurrentHashMap<>();
+    private final Cache<String, List<Long>> requestCounts;
+
     private static final int MAX_REQUESTS = 100;
     private static final long TIME_WINDOW_MS = 60_000;
+
+    public RateLimitingFilter() {
+        this.requestCounts = Caffeine.newBuilder()
+                .expireAfterAccess(TIME_WINDOW_MS * 2, TimeUnit.MILLISECONDS)
+                .build();
+    }
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
@@ -35,18 +47,13 @@ public class RateLimitingFilter implements Filter {
         String ip = resolveClientIp(httpRequest);
         long now = System.currentTimeMillis();
 
-        long count = requestCounts.compute(ip, (key, timestamps) -> {
-            if (timestamps == null) {
-                timestamps = Collections.synchronizedList(new ArrayList<>());
-            }
-            synchronized (timestamps) {
-                timestamps.removeIf(ts -> now - ts > TIME_WINDOW_MS);
-                timestamps.add(now);
-            }
-            return timestamps;
-        }).size();
+        List<Long> timestamps = requestCounts.get(ip, k -> Collections.synchronizedList(new ArrayList<>()));
+        synchronized (timestamps) {
+            timestamps.removeIf(ts -> now - ts > TIME_WINDOW_MS);
+            timestamps.add(now);
+        }
 
-        if (count > MAX_REQUESTS) {
+        if (timestamps.size() > MAX_REQUESTS) {
             httpResponse.setStatus(429);
             httpResponse.setContentType("application/json");
             httpResponse.getWriter().write("{\"error\":\"Too many requests. Please try again later.\"}");
@@ -54,12 +61,6 @@ public class RateLimitingFilter implements Filter {
         }
 
         chain.doFilter(request, response);
-    }
-
-    private boolean isPublicEndpoint(String path) {
-        return path.equals("/login") || path.equals("/signup")
-                || path.startsWith("/css/") || path.startsWith("/js/")
-                || path.equals("/actuator/health");
     }
 
     private String resolveClientIp(HttpServletRequest request) {
@@ -73,5 +74,11 @@ public class RateLimitingFilter implements Filter {
             ip = ip.split(",")[0].trim();
         }
         return ip;
+    }
+
+    private boolean isPublicEndpoint(String path) {
+        return path.equals("/login") || path.equals("/signup")
+                || path.startsWith("/css/") || path.startsWith("/js/")
+                || path.equals("/actuator/health");
     }
 }

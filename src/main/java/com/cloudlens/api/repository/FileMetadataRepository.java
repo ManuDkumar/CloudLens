@@ -33,6 +33,9 @@ public interface FileMetadataRepository extends JpaRepository<FileMetadata, UUID
            "ORDER BY f.uploadTimestamp DESC")
     Page<FileMetadata> searchUserFiles(@Param("uploadedBy") String uploadedBy, @Param("search") String search, Pageable pageable);
 
+    @Query("SELECT f.originalName FROM FileMetadata f WHERE (:username IS NULL OR f.uploadedBy = :username)")
+    List<String> findOriginalNamesByUsername(@Param("username") String username);
+
     long countByUploadedBy(String uploadedBy);
 
     List<FileMetadata> findByUploadedBy(String uploadedBy);
