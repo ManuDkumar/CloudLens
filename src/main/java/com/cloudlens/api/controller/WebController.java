@@ -63,9 +63,13 @@ public class WebController {
     }
 
     @PostMapping("/delete/{id}")
-    public String deleteFile(@PathVariable UUID id, RedirectAttributes redirectAttributes) {
+    public String deleteFile(@PathVariable UUID id, Authentication authentication,
+                             RedirectAttributes redirectAttributes) {
         try {
-            fileService.deleteFile(id);
+            String username = authentication.getName();
+            boolean isAdmin = authentication.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+            fileService.deleteFile(id, username, isAdmin);
             redirectAttributes.addFlashAttribute("message", "File deleted successfully!");
         } catch (RuntimeException e) {
             redirectAttributes.addFlashAttribute("error", "Delete failed: " + e.getMessage());
@@ -76,9 +80,13 @@ public class WebController {
     @PostMapping("/update/{id}")
     public String updateFile(@PathVariable UUID id,
                              @RequestParam("description") String description,
+                             Authentication authentication,
                              RedirectAttributes redirectAttributes) {
         try {
-            fileService.updateFile(id, description);
+            String username = authentication.getName();
+            boolean isAdmin = authentication.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+            fileService.updateFile(id, description, username, isAdmin);
             redirectAttributes.addFlashAttribute("message", "Description updated successfully!");
         } catch (RuntimeException e) {
             redirectAttributes.addFlashAttribute("error", "Update failed: " + e.getMessage());
@@ -88,9 +96,13 @@ public class WebController {
 
     @PostMapping("/delete/bulk")
     public String deleteBulk(@RequestParam("selectedIds") List<UUID> selectedIds,
+                             Authentication authentication,
                              RedirectAttributes redirectAttributes) {
         try {
-            fileService.deleteFiles(selectedIds);
+            String username = authentication.getName();
+            boolean isAdmin = authentication.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+            fileService.deleteFiles(selectedIds, username, isAdmin);
             redirectAttributes.addFlashAttribute("message", selectedIds.size() + " file(s) deleted successfully!");
         } catch (RuntimeException e) {
             redirectAttributes.addFlashAttribute("error", "Bulk delete failed: " + e.getMessage());

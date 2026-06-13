@@ -3,13 +3,13 @@ package com.cloudlens.api.service;
 import com.cloudlens.api.dto.FileResponse;
 import com.cloudlens.api.entity.FileMetadata;
 import com.cloudlens.api.exception.FileNotFoundException;
-import com.cloudlens.api.exception.StorageException;
 import com.cloudlens.api.repository.FileMetadataRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -67,16 +67,19 @@ public class FileService {
         return mapToResponse(saved);
     }
 
-    public void deleteFile(UUID id) {
+    public void deleteFile(UUID id, String currentUser, boolean isAdmin) {
         FileMetadata metadata = repository.findById(id)
                 .orElseThrow(() -> new FileNotFoundException("File not found with id: " + id));
+        if (!isAdmin && !metadata.getUploadedBy().equals(currentUser)) {
+            throw new AccessDeniedException("You do not have permission to delete this file");
+        }
         storageService.deleteFile(metadata.getStorageUrl());
         repository.deleteById(id);
     }
 
-    public void deleteFiles(List<UUID> ids) {
+    public void deleteFiles(List<UUID> ids, String currentUser, boolean isAdmin) {
         for (UUID id : ids) {
-            deleteFile(id);
+            deleteFile(id, currentUser, isAdmin);
         }
     }
 
@@ -88,9 +91,12 @@ public class FileService {
         repository.deleteAll(files);
     }
 
-    public FileResponse updateFile(UUID id, String description) {
+    public FileResponse updateFile(UUID id, String description, String currentUser, boolean isAdmin) {
         FileMetadata metadata = repository.findById(id)
                 .orElseThrow(() -> new FileNotFoundException("File not found with id: " + id));
+        if (!isAdmin && !metadata.getUploadedBy().equals(currentUser)) {
+            throw new AccessDeniedException("You do not have permission to update this file");
+        }
         metadata.setDescription(description);
         return mapToResponse(repository.save(metadata));
     }

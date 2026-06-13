@@ -34,9 +34,13 @@ public class FileController {
     @PutMapping("/{id}")
     public ResponseEntity<FileResponse> updateFile(
             @PathVariable UUID id,
-            @RequestParam("description") String description) {
+            @RequestParam("description") String description,
+            Authentication authentication) {
         try {
-            FileResponse response = fileService.updateFile(id, description);
+            String username = authentication.getName();
+            boolean isAdmin = authentication.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+            FileResponse response = fileService.updateFile(id, description, username, isAdmin);
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
@@ -44,9 +48,12 @@ public class FileController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteFile(@PathVariable UUID id) {
+    public ResponseEntity<Void> deleteFile(@PathVariable UUID id, Authentication authentication) {
         try {
-            fileService.deleteFile(id);
+            String username = authentication.getName();
+            boolean isAdmin = authentication.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+            fileService.deleteFile(id, username, isAdmin);
             return ResponseEntity.noContent().build();
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
@@ -54,8 +61,11 @@ public class FileController {
     }
 
     @PostMapping("/bulk-delete")
-    public ResponseEntity<Void> bulkDelete(@RequestBody List<UUID> ids) {
-        fileService.deleteFiles(ids);
+    public ResponseEntity<Void> bulkDelete(@RequestBody List<UUID> ids, Authentication authentication) {
+        String username = authentication.getName();
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        fileService.deleteFiles(ids, username, isAdmin);
         return ResponseEntity.noContent().build();
     }
 
