@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -155,11 +156,39 @@ class FileServiceTest {
                 .uploadTimestamp(LocalDateTime.now())
                 .build();
         when(repository.findById(id)).thenReturn(Optional.of(metadata));
-        when(storageService.generatePresignedUrl(any())).thenReturn("http://presigned.url");
 
         fileService.getFileMetadata(id, "alice", false);
 
         verify(repository).findById(id);
+    }
+
+    @Test
+    void getDownloadUrl_ownFile_asUser_shouldGeneratePresignedUrl() {
+        UUID id = UUID.randomUUID();
+        FileMetadata metadata = FileMetadata.builder()
+                .internalId(id)
+                .uploadedBy("alice")
+                .storageUrl("test-key")
+                .build();
+        when(repository.findById(id)).thenReturn(Optional.of(metadata));
+        when(storageService.generatePresignedUrl("test-key")).thenReturn("http://presigned.url");
+
+        String url = fileService.getDownloadUrl(id, "alice", false);
+
+        assertThat(url).isEqualTo("http://presigned.url");
+    }
+
+    @Test
+    void getDownloadUrl_otherFile_asUser_shouldThrow() {
+        UUID id = UUID.randomUUID();
+        FileMetadata metadata = FileMetadata.builder()
+                .internalId(id)
+                .uploadedBy("bob")
+                .build();
+        when(repository.findById(id)).thenReturn(Optional.of(metadata));
+
+        assertThatThrownBy(() -> fileService.getDownloadUrl(id, "alice", false))
+                .isInstanceOf(AccessDeniedException.class);
     }
 
     @Test

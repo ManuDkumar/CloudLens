@@ -112,6 +112,15 @@ public class FileService {
         return mapToResponse(metadata);
     }
 
+    public String getDownloadUrl(UUID id, String currentUser, boolean isAdmin) {
+        FileMetadata metadata = repository.findById(id)
+                .orElseThrow(() -> new FileNotFoundException("File not found with id: " + id));
+        if (!isAdmin && !metadata.getUploadedBy().equals(currentUser)) {
+            throw new AccessDeniedException("You do not have permission to download this file");
+        }
+        return storageService.generatePresignedUrl(metadata.getStorageUrl());
+    }
+
     public long getTotalFileCount(String currentUser, boolean isAdmin) {
         if (isAdmin) {
             return repository.count();
@@ -134,7 +143,6 @@ public class FileService {
                 .internalId(entity.getInternalId())
                 .originalName(entity.getOriginalName())
                 .storageUrl(entity.getStorageUrl())
-                .downloadUrl(storageService.generatePresignedUrl(entity.getStorageUrl()))
                 .fileSize(entity.getFileSize())
                 .uploadTimestamp(entity.getUploadTimestamp())
                 .description(entity.getDescription())

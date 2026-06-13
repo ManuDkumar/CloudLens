@@ -25,7 +25,7 @@ public class SecurityConfig {
             .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/login", "/signup", "/css/**", "/js/**", "/actuator/health").permitAll()
-                .requestMatchers("/delete/**", "/update/**").authenticated()
+                .requestMatchers("/delete/**", "/update/**", "/download/**").authenticated()
                 .requestMatchers("/admin/**", "/api/v1/files/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )

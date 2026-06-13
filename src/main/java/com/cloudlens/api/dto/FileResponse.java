@@ -16,7 +16,6 @@ public class FileResponse {
     private UUID internalId;
     private String originalName;
     private String storageUrl;
-    private String downloadUrl;
     private Long fileSize;
     private LocalDateTime uploadTimestamp;
     private String description;

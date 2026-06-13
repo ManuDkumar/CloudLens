@@ -147,10 +147,10 @@
                     <td>
                         <div class="d-flex align-items-center gap-3">
                             <th:block th:if="${T(com.cloudlens.api.util.FileUtils).isImage(file.originalName)}">
-                                <img th:src="${file.downloadUrl}" class="file-thumb"
+                                <img th:src="@{'/download/' + ${file.internalId}}" class="file-thumb"
                                      th:alt="${file.originalName}"
                                      data-bs-toggle="modal" data-bs-target="#previewModal"
-                                     th:data-src="${file.downloadUrl}">
+                                     th:data-src="@{'/download/' + ${file.internalId}}">
                             </th:block>
                             <th:block th:unless="${T(com.cloudlens.api.util.FileUtils).isImage(file.originalName)}">
                                 <div th:classappend="|file-icon ${T(com.cloudlens.api.util.FileUtils).getFileIconClass(file.originalName)}|">
@@ -176,7 +176,7 @@
                                     title="View metadata">
                                 <i class="bi bi-info-circle"></i>
                             </button>
-                            <a th:href="${file.downloadUrl}" class="btn btn-download" target="_blank">
+                            <a th:href="@{'/download/' + ${file.internalId}}" class="btn btn-download" target="_blank">
                                 <i class="bi bi-download"></i>
                             </a>
                             <button type="button" class="btn btn-edit" data-bs-toggle="modal" data-bs-target="#editModal"
@@ -246,7 +246,13 @@
             <div class="modal-content">
                 <div class="modal-body">
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    <img id="previewImage" src="" alt="Preview">
+                    <div id="previewSpinner" class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status" style="width:3rem;height:3rem;">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Loading image...</p>
+                    </div>
+                    <img id="previewImage" src="" alt="Preview" style="display:none;">
                 </div>
             </div>
         </div>

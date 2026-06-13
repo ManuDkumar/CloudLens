@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
@@ -55,6 +56,19 @@ public class FileController {
                     .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
             fileService.deleteFile(id, username, isAdmin);
             return ResponseEntity.noContent().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @GetMapping("/{id}/download")
+    public ResponseEntity<Void> downloadFile(@PathVariable UUID id, Authentication authentication) {
+        try {
+            String username = authentication.getName();
+            boolean isAdmin = authentication.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+            String url = fileService.getDownloadUrl(id, username, isAdmin);
+            return ResponseEntity.status(302).location(URI.create(url)).build();
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }

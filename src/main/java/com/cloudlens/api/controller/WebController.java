@@ -109,4 +109,13 @@ public class WebController {
         }
         return "redirect:/";
     }
+
+    @GetMapping("/download/{id}")
+    public String downloadFile(@PathVariable UUID id, Authentication authentication) {
+        String username = authentication.getName();
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        String url = fileService.getDownloadUrl(id, username, isAdmin);
+        return "redirect:" + url;
+    }
 }
